@@ -12,3 +12,7 @@ winget install -e --id 7zip.7zip
 winget install --id=OBSProject.OBSStudio  -e
 ## unzip "C:\Users\mchel\OneDrive\Documents\0_Store\Twitch\Obs\230411_obs-studio.zip" to C:\Users\mchel\AppData\Roaming\obs-studio
 winget install -e --id GIMP.GIMP
+
+# Recording
+winget install --id=Cockos.REAPER  -e
+## https://github.com/Andersama/obs-asio/releases
