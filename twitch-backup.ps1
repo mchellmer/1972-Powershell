@@ -14,6 +14,11 @@ $obsPath = "C:/Users/mchel/AppData/Roaming/obs-studio/*"
 Copy-Item -Path $obsPath -Destination "$archiveAPath/Obs" -Recurse -Force
 Copy-Item -Path "$archiveAPath/Obs" -Destination "$archiveBPath/Obs" -Recurse -Force
 
+# Tracks
+$scoresPath = "C:/Users/mchel/OneDrive/Documents/MuseScore4/Scores/*"
+Copy-Item -Path $scoresPath -Destination "$archiveAPath/Scores" -Recurse -Force
+Copy-Item -Path "$archiveAPath/Scores" -Destination "$archiveBPath/Scores" -Recurse -Force
+
 # Recordings
 $recordingsPath = "C:/Users/mchel/Videos/*"
 $excludeSource = Get-ChildItem -recurse $recordingsPath
