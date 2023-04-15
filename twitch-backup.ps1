@@ -1,27 +1,100 @@
-# Get drives
-$archiveA = Get-Volume -FileSystemLabel "ArchiveA"
-$archiveB = Get-Volume -FileSystemLabel "ArchiveB"
-$archiveAPath = "$($archiveA.DriveLetter):"
-$archiveBPath = "$($archiveB.DriveLetter):"
+function Get-ArchivesAB {
+    param (
+        $archiveAFriendlyName="ArchiveA",
+        $archiveBFriendlyName="ArchiveB"
+    )
+    # Get drives
+    $archiveA = Get-Volume -FileSystemLabel $archiveAFriendlyName
+    $archiveB = Get-Volume -FileSystemLabel $archiveBFriendlyName
+    $archiveAPath = "$($archiveA.DriveLetter):"
+    $archiveBPath = "$($archiveB.DriveLetter):"
+    return $archiveAPath, $archiveBPath
+}
 
-# Twitch Folder
-$twitchPath = "C:/Users/mchel/OneDrive/Documents/0_Store/Twitch/*"
-Copy-Item -Path $twitchPath -Destination "$archiveAPath/Twitch" -Recurse -Force
-Copy-Item -Path "$archiveAPath/Twitch" -Destination "$archiveBPath/Twitch" -Recurse -Force
+function Invoke-Archive {
+    param (
+        $primaryPath,
+        $secondaryPath,
+        $dataPath,
+        $tag,
+        $method
+    )
 
-# Obs Folder
-$obsPath = "C:/Users/mchel/AppData/Roaming/obs-studio/*"
-Copy-Item -Path $obsPath -Destination "$archiveAPath/Obs" -Recurse -Force
-Copy-Item -Path "$archiveAPath/Obs" -Destination "$archiveBPath/Obs" -Recurse -Force
+    if ($method -eq "overwriteZip") {
+        Invoke-7ip $dataPath $tag "archive"
 
-# Tracks
-$scoresPath = "C:/Users/mchel/OneDrive/Documents/MuseScore4/Scores/*"
-Copy-Item -Path $scoresPath -Destination "$archiveAPath/Scores" -Recurse -Force
-Copy-Item -Path "$archiveAPath/Scores" -Destination "$archiveBPath/Scores" -Recurse -Force
+        $soureZip = "$dataPath/$tag.7z"
+        $destZipA = "$primaryPath/$tag.7z"
+        $destZipB = "$secondaryPath/$tag.7z"
+    
+        Write-Host "Copy archive $soureZip to $destZipA and $destZipB"
+        Copy-Item -Path $soureZip -Destination $destZipA -Force
+        Copy-Item -Path $soureZip -Destination $destZipB -Force
+        Remove-Item $soureZip
+    } elseif ($method -eq "update") {
+        robocopy /xc /xn /xo /E $dataPath "$primaryPath/$tag"
+        robocopy /xc /xn /xo /E $dataPath "$secondaryPath/$tag"
+    }
+}
 
-# Recordings
-$recordingsPath = "C:/Users/mchel/Videos/*"
-$excludeSource = Get-ChildItem -recurse $recordingsPath
-$excludeA = Get-ChildItem -recurse "$archiveAPath/Recordings"
-Copy-Item -Path $recordingsPath -Destination "$archiveAPath/Recordings" -Recurse -Exclude $excludeSource
-Copy-Item -Path "$archiveAPath/Recordings/*" -Destination "$archiveBPath/Recordings" -Recurse -Exclude $excludeA
+function Invoke-7ip {
+    param (
+        $zipDir,
+        $tag,
+        $method
+    )
+    $7zipPath = "$env:ProgramFiles/7-Zip/7z.exe"
+
+    if (-not (Test-Path -Path $7zipPath -PathType Leaf)) {
+        throw "7 zip file '$7zipPath' not found"
+    }
+
+    Set-Alias Start-SevenZip $7zipPath
+
+    if ($method -eq "archive") {
+        $Source = $zipDir
+        $Target = "$($zipDir)/$($tag).7z"
+    
+        write-host "Packing $zipDir"
+        Start-SevenZip a -aoa -t7z -mx=9 $Target $Source
+    } elseif ($method -eq "overwrite") {
+        write-host "Unpacking $zipDir"
+        Start-SevenZip x -aoa $zipDir
+    }
+}
+
+$archiveDirs = @(
+    @{
+        localPath="C:/Users/mchel/OneDrive/Documents/0_Store/Twitch";
+        tag="Twitch";
+        method="overwriteZip"
+    },
+    @{
+        localPath="C:/Users/mchel/AppData/Roaming/obs-studio";
+        tag="Obs";
+        method="overwriteZip"
+    },
+    @{
+        localPath="C:/Users/mchel/OneDrive/Documents/MuseScore4/Scores";
+        tag="Scores";
+        method="overwriteZip"
+    },
+    @{
+        localPath="C:/Users/mchel/Videos";
+        tag="Recordings";
+        method="update"
+    }
+)
+
+$archiveA, $archiveB = Get-ArchivesAB
+
+foreach ($archiveDict in $archiveDirs) {
+    Invoke-Archive $archiveA $archiveB $archiveDict.localPath $archiveDict.tag $archiveDict.method
+}
+
+# # Recordings
+# $recordingsPath = "C:/Users/mchel/Videos/*"
+# $excludeSource = Get-ChildItem -recurse $recordingsPath
+# $excludeA = Get-ChildItem -recurse "$archiveAPath/Recordings"
+# Copy-Item -Path $recordingsPath -Destination "$archiveAPath/Recordings" -Recurse -Exclude $excludeSource
+# Copy-Item -Path "$archiveAPath/Recordings/*" -Destination "$archiveBPath/Recordings" -Recurse -Exclude $excludeA
