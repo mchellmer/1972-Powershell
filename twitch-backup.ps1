@@ -91,10 +91,3 @@ $archiveA, $archiveB = Get-ArchivesAB
 foreach ($archiveDict in $archiveDirs) {
     Invoke-Archive $archiveA $archiveB $archiveDict.localPath $archiveDict.tag $archiveDict.method
 }
-
-# # Recordings
-# $recordingsPath = "C:/Users/mchel/Videos/*"
-# $excludeSource = Get-ChildItem -recurse $recordingsPath
-# $excludeA = Get-ChildItem -recurse "$archiveAPath/Recordings"
-# Copy-Item -Path $recordingsPath -Destination "$archiveAPath/Recordings" -Recurse -Exclude $excludeSource
-# Copy-Item -Path "$archiveAPath/Recordings/*" -Destination "$archiveBPath/Recordings" -Recurse -Exclude $excludeA

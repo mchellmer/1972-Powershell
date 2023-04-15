@@ -15,5 +15,6 @@ winget install -e --id GIMP.GIMP
 
 # Recording
 winget install --id=Cockos.REAPER  -e
+## custom themes for reaper: https://www.sws-extension.org/
 ## https://github.com/Andersama/obs-asio/releases
 winget install -e --id Musescore.Musescore
